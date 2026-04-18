@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הג'ים שלי</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #1D9E75;
+  --green-light: #E1F5EE;
+  --green-dark: #0F6E56;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --bg: #f4f4f4;
+  --card: #ffffff;
+  --text: #111111;
+  --muted: #888888;
+  --border: #e8e8e8;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 80px;
+  position: relative;
+}
+
+/* ─── PAGES ─── */
+.page { display:none; }
+.page.active { display:block; }
+
+/* ─── TOP BAR ─── */
+.topbar {
+  background: var(--card);
+  padding: 52px 20px 16px;
+  border-bottom: 0.5px solid var(--border);
+  position: sticky; top:0; z-index:20;
+}
+.topbar h1 { font-size:22px; font-weight:700; }
+.topbar p  { font-size:13px; color:var(--muted); margin-top:2px; }
+
+/* ─── STATS GRID ─── */
+.stats {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  padding:16px;
+}
+.stat-card {
+  background:var(--card); border-radius:16px;
+  padding:16px; border:0.5px solid var(--border);
+}
+.stat-num  { font-size:28px; font-weight:700; }
+.stat-label{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* ─── SECTION TITLE ─── */
+.section-title {
+  font-size:12px; font-weight:600; color:var(--muted);
+  text-transform:uppercase; letter-spacing:1px;
+  padding:0 16px; margin:8px 0 10px;
+}
+
+/* ─── CLASS CARD ─── */
+.classes-list { padding:0 16px; }
+.class-card {
+  background:var(--card); border-radius:16px;
+  padding:16px; border:0.5px solid var(--border);
+  margin-bottom:10px; display:flex;
+  align-items:center; gap:14px; cursor:pointer;
+  transition:background 0.12s;
+}
+.class-card:active { background:#f0f0f0; }
+.class-icon {
+  width:46px; height:46px; border-radius:14px;
+  display:flex; align-items:center;
+  justify-content:center; flex-shrink:0; font-size:22px;
+}
+.class-info { flex:1; min-width:0; }
+.class-name { font-size:15px; font-weight:600; }
+.class-meta { font-size:12px; color:var(--muted); margin-top:3px; }
+.class-right { display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
+.class-time { font-size:13px; font-weight:500; color:#444; }
+.badge {
+  font-size:11px; font-weight:600;
+  padding:3px 10px; border-radius:20px;
+}
+.badge.open   { background:var(--green-light);  color:var(--green-dark); }
+.badge.full   { background:var(--red-light);    color:var(--red); }
+.badge.few    { background:var(--amber-light);  color:var(--amber); }
+
+/* ─── MEMBER CARD ─── */
+.members-list { padding:0 16px; }
+.member-card {
+  background:var(--card); border-radius:16px;
+  padding:14px 16px; border:0.5px solid var(--border);
+  margin-bottom:10px; display:flex;
+  align-items:center; gap:12px;
+}
+.avatar {
+  width:42px; height:42px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:700; flex-shrink:0;
+  background:var(--green-light); color:var(--green-dark);
+}
+.member-info { flex:1; }
+.member-name { font-size:15px; font-weight:600; }
+.member-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.plan-badge {
+  font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px;
+  background:var(--purple-light); color:var(--purple);
+}
+
+/* ─── FILTERS ─── */
+.filters {
+  display:flex; gap:8px; padding:12px 16px;
+  overflow-x:auto; background:var(--card);
+  border-bottom:0.5px solid var(--border);
+}
+.filters::-webkit-scrollbar { display:none; }
+.filter-pill {
+  flex-shrink:0; padding:6px 14px; border-radius:20px;
+  font-size:13px; font-weight:500; border:0.5px solid var(--border);
+  background:var(--card); color:#555; cursor:pointer; font-family:'Heebo',sans-serif;
+  transition:all 0.15s;
+}
+.filter-pill.active { background:var(--green); color:#fff; border-color:var(--green); }
+
+/* ─── FAB ─── */
+.fab {
+  position:fixed; bottom:88px; left:20px;
+  width:54px; height:54px; border-radius:50%;
+  background:var(--green); color:#fff; font-size:26px;
+  border:none; display:flex; align-items:center;
+  justify-content:center; cursor:pointer;
+  box-shadow:0 4px 16px rgba(29,158,117,0.4);
+  transition:transform 0.15s;
+  font-family:'Heebo',sans-serif;
+}
+.fab:active { transform:scale(0.93); }
+
+/* ─── NAVBAR ─── */
+.navbar {
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:480px;
+  background:var(--card); border-top:0.5px solid var(--border);
+  display:flex; justify-content:space-around; padding:10px 0 20px;
+  z-index:20;
+}
+.nav-item {
+  display:flex; flex-direction:column; align-items:center;
+  gap:3px; cursor:pointer; padding:4px 16px;
+}
+.nav-item svg { width:22px; height:22px; }
+.nav-item span { font-size:10px; color:#aaa; font-family:'Heebo',sans-serif; }
+.nav-item.active span { color:var(--green); }
+.nav-item.active svg { stroke:var(--green) !important; }
+
+/* ─── MODAL ─── */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.45); z-index:50;
+  align-items:flex-end; justify-content:center;
+}
+.overlay.open { display:flex; }
+.sheet {
+  background:var(--card); border-radius:24px 24px 0 0;
+  padding:20px 20px 40px; width:100%; max-width:480px;
+  animation:slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform:translateY(60px); opacity:0; }
+  to   { transform:translateY(0);    opacity:1; }
+}
+.drag-handle {
+  width:36px; height:4px; background:#ddd;
+  border-radius:2px; margin:0 auto 20px;
+}
+.sheet h2   { font-size:18px; font-weight:700; margin-bottom:4px; }
+.sheet .sub { font-size:13px; color:var(--muted); margin-bottom:20px; }
+.field-label { font-size:13px; font-weight:500; color:#555; margin-bottom:6px; display:block; }
+.field-input {
+  width:100%; padding:12px 14px; border:0.5px solid var(--border);
+  border-radius:12px; font-size:14px; margin-bottom:14px;
+  background:#f9f9f9; color:var(--text); outline:none;
+  font-family:'Heebo',sans-serif; transition:border-color 0.15s;
+}
+.field-input:focus { border-color:var(--green); background:#fff; }
+.btn-green {
+  width:100%; padding:14px; background:var(--green); color:#fff;
+  border:none; border-radius:14px; font-size:15px; font-weight:700;
+  cursor:pointer; font-family:'Heebo',sans-serif; margin-top:4px;
+  transition:opacity 0.15s;
+}
+.btn-green:active { opacity:0.85; }
+.btn-cancel {
+  width:100%; padding:12px; background:none; border:none;
+  color:var(--muted); font-size:14px; cursor:pointer;
+  font-family:'Heebo',sans-serif; margin-top:6px;
+}
+
+/* ─── TOAST ─── */
+.toast {
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:#222; color:#fff; padding:10px 20px; border-radius:20px;
+  font-size:13px; font-weight:500; opacity:0;
+  transition:all 0.3s; z-index:100; white-space:nowrap;
+  font-family:'Heebo',sans-serif;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ─── EMPTY STATE ─── */
+.empty {
+  text-align:center; padding:48px 20px; color:var(--muted);
+}
+.empty-icon { font-size:40px; margin-bottom:12px; }
+.empty p { font-size:14px; }
+
+/* ─── BOOKING CARD ─── */
+.booking-card {
+  background:var(--card); border-radius:16px;
+  padding:14px 16px; border:0.5px solid var(--border);
+  margin-bottom:10px; display:flex; align-items:center; gap:12px;
+}
+.booking-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--green); flex-shrink:0;
+}
+.booking-info { flex:1; }
+.booking-name { font-size:14px; font-weight:600; }
+.booking-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.btn-cancel-book {
+  font-size:12px; color:var(--red); background:var(--red-light);
+  border:none; border-radius:10px; padding:6px 12px;
+  cursor:pointer; font-family:'Heebo',sans-serif; font-weight:500;
+  flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ PAGE: HOME ═══ -->
+<div class="page active" id="page-home">
+  <div class="topbar">
+    <h1>הג'ים שלי 💪</h1>
+    <p id="home-sub">ברוך הבא!</p>
+  </div>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--green)" id="stat-members">0</div>
+      <div class="stat-label">חברים פעילים</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--purple)" id="stat-classes">0</div>
+      <div class="stat-label">שיעורים</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#D85A30" id="stat-bookings">0</div>
+      <div class="stat-label">הזמנות</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--purple)" id="stat-today">0</div>
+      <div class="stat-label">שיעורים היום</div>
+    </div>
+  </div>
+  <div class="section-title">שיעורים קרובים</div>
+  <div class="classes-list" id="home-classes"></div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: CLASSES ═══ -->
+<div class="page" id="page-classes">
+  <div class="topbar">
+    <h1>שיעורים</h1>
+    <p id="classes-sub">0 שיעורים</p>
+  </div>
+  <div class="filters">
+    <button class="filter-pill active" onclick="filterClasses('all',this)">הכל</button>
+    <button class="filter-pill" onclick="filterClasses('sun',this)">ראשון</button>
+    <button class="filter-pill" onclick="filterClasses('mon',this)">שני</button>
+    <button class="filter-pill" onclick="filterClasses('tue',this)">שלישי</button>
+    <button class="filter-pill" onclick="filterClasses('wed',this)">רביעי</button>
+    <button class="filter-pill" onclick="filterClasses('thu',this)">חמישי</button>
+    <button class="filter-pill" onclick="filterClasses('fri',this)">שישי</button>
+  </div>
+  <div style="height:16px"></div>
+  <div class="classes-list" id="classes-list"></div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: MEMBERS ═══ -->
+<div class="page" id="page-members">
+  <div class="topbar">
+    <h1>חברים</h1>
+    <p id="members-sub">0 חברים</p>
+  </div>
+  <div style="height:16px"></div>
+  <div class="members-list" id="members-list"></div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: BOOKINGS ═══ -->
+<div class="page" id="page-bookings">
+  <div class="topbar">
+    <h1>הזמנות</h1>
+    <p id="bookings-sub">0 הזמנות</p>
+  </div>
+  <div style="height:16px"></div>
+  <div class="classes-list" id="bookings-list"></div>
+</div>
+
+<!-- ═══════════════════════════════ FAB ═══ -->
+<button class="fab" id="fab-btn" onclick="openFab()">+</button>
+
+<!-- ═══════════════════════════════ NAVBAR ═══ -->
+<nav class="navbar">
+  <div class="nav-item active" id="nav-home" onclick="goTo('home')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="#aaa" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="12" y="3" width="7" height="7" rx="2"/><rect x="3" y="12" width="7" height="7" rx="2"/><rect x="12" y="12" width="7" height="7" rx="2"/></svg>
+    <span>בית</span>
+  </div>
+  <div class="nav-item" id="nav-classes" onclick="goTo('classes')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="#aaa" stroke-width="1.5"><rect x="3" y="5" width="16" height="14" rx="2"/><path d="M15 3v4M7 3v4M3 11h16"/></svg>
+    <span>שיעורים</span>
+  </div>
+  <div class="nav-item" id="nav-members" onclick="goTo('members')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="#aaa" stroke-width="1.5"><circle cx="11" cy="8" r="4"/><path d="M4 19c0-3.866 3.134-7 7-7h0c3.866 0 7 3.134 7 7"/></svg>
+    <span>חברים</span>
+  </div>
+  <div class="nav-item" id="nav-bookings" onclick="goTo('bookings')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="#aaa" stroke-width="1.5"><path d="M9 11l2 2 4-4"/><rect x="3" y="5" width="16" height="14" rx="2"/><path d="M15 3v4M7 3v4"/></svg>
+    <span>הזמנות</span>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════ MODALS ═══ -->
+
+<!-- Add Class -->
+<div class="overlay" id="modal-class">
+  <div class="sheet">
+    <div class="drag-handle"></div>
+    <h2>הוספת שיעור חדש</h2>
+    <p class="sub">מלא את הפרטים</p>
+    <label class="field-label">שם השיעור</label>
+    <input class="field-input" id="cls-name" placeholder="למשל: יוגה בוקר">
+    <label class="field-label">מדריך</label>
+    <input class="field-input" id="cls-trainer" placeholder="שם המדריך">
+    <label class="field-label">יום בשבוע</label>
+    <select class="field-input" id="cls-day">
+      <option value="sun">ראשון</option>
+      <option value="mon">שני</option>
+      <option value="tue">שלישי</option>
+      <option value="wed">רביעי</option>
+      <option value="thu">חמישי</option>
+      <option value="fri">שישי</option>
+    </select>
+    <label class="field-label">שעה</label>
+    <input class="field-input" id="cls-time" type="time" value="09:00">
+    <label class="field-label">קיבולת (מקסימום משתתפים)</label>
+    <input class="field-input" id="cls-cap" type="number" placeholder="10" min="1">
+    <label class="field-label">אייקון</label>
+    <select class="field-input" id="cls-icon">
+      <option value="🧘">🧘 יוגה / מתיחות</option>
+      <option value="⚡">⚡ HIIT / אינטנסיבי</option>
+      <option value="🏋️">🏋️ כוח</option>
+      <option value="🚴">🚴 ספינינג</option>
+      <option value="🥊">🥊 אגרוף / קיקבוקס</option>
+      <option value="💃">💃 ריקוד / זומבה</option>
+      <option value="🏃">🏃 ריצה</option>
+      <option value="🧗">🧗 פילאטיס</option>
+    </select>
+    <button class="btn-green" onclick="addClass()">הוספה</button>
+    <button class="btn-cancel" onclick="closeModal('modal-class')">ביטול</button>
+  </div>
+</div>
+
+<!-- Add Member -->
+<div class="overlay" id="modal-member">
+  <div class="sheet">
+    <div class="drag-handle"></div>
+    <h2>הוספת חבר חדש</h2>
+    <p class="sub">מלא את פרטי החבר</p>
+    <label class="field-label">שם מלא</label>
+    <input class="field-input" id="mem-name" placeholder="שם ושם משפחה">
+    <label class="field-label">טלפון</label>
+    <input class="field-input" id="mem-phone" placeholder="050-0000000" type="tel">
+    <label class="field-label">מסלול מנוי</label>
+    <select class="field-input" id="mem-plan">
+      <option value="חודשי">חודשי</option>
+      <option value="שנתי">שנתי</option>
+      <option value="10 כניסות">10 כניסות</option>
+      <option value="ניסיון">ניסיון חינמי</option>
+    </select>
+    <button class="btn-green" onclick="addMember()">הוספה</button>
+    <button class="btn-cancel" onclick="closeModal('modal-member')">ביטול</button>
+  </div>
+</div>
+
+<!-- Book Class -->
+<div class="overlay" id="modal-book">
+  <div class="sheet">
+    <div class="drag-handle"></div>
+    <h2 id="book-title">הזמנת מקום</h2>
+    <p class="sub" id="book-sub"></p>
+    <label class="field-label">בחר חבר</label>
+    <select class="field-input" id="book-member"></select>
+    <button class="btn-green" onclick="confirmBook()">אישור הזמנה</button>
+    <button class="btn-cancel" onclick="closeModal('modal-book')">ביטול</button>
+  </div>
+</div>
+
+<!-- FAB menu -->
+<div class="overlay" id="modal-fab">
+  <div class="sheet">
+    <div class="drag-handle"></div>
+    <h2>מה תרצה להוסיף?</h2>
+    <p class="sub" style="margin-bottom:16px">בחר אחת מהאפשרויות</p>
+    <button class="btn-green" style="margin-bottom:10px" onclick="closeModal('modal-fab');openModal('modal-class')">+ שיעור חדש</button>
+    <button class="btn-green" style="background:var(--purple)" onclick="closeModal('modal-fab');openModal('modal-member')">+ חבר חדש</button>
+    <button class="btn-cancel" onclick="closeModal('modal-fab')">ביטול</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───
+const DAY_NAMES = { sun:'ראשון', mon:'שני', tue:'שלישי', wed:'רביעי', thu:'חמישי', fri:'שישי' };
+
+let classes  = JSON.parse(localStorage.getItem('gym_classes')  || '[]');
+let members  = JSON.parse(localStorage.getItem('gym_members')  || '[]');
+let bookings = JSON.parse(localStorage.getItem('gym_bookings') || '[]');
+
+// Seed data if empty
+if (!classes.length) {
+  classes = [
+    { id:1, name:'יוגה בוקר',   trainer:'דנה כהן',  day:'mon', time:'07:00', cap:10, icon:'🧘', booked:3 },
+    { id:2, name:'אימון HIIT',  trainer:'יוסי לוי',  day:'mon', time:'18:30', cap:8,  icon:'⚡',  booked:8 },
+    { id:3, name:'פילאטיס',     trainer:'מיכל גל',   day:'wed', time:'09:30', cap:12, icon:'🧗', booked:5 },
+    { id:4, name:'ספינינג',     trainer:'אלון שמיר', day:'thu', time:'17:00', cap:15, icon:'🚴', booked:2 },
+  ];
+  saveClasses();
+}
+if (!members.length) {
+  members = [
+    { id:1, name:'שרה לוי',   phone:'050-1234567', plan:'חודשי' },
+    { id:2, name:'דוד כהן',   phone:'052-7654321', plan:'שנתי' },
+    { id:3, name:'רונית פז',  phone:'054-9876543', plan:'10 כניסות' },
+  ];
+  saveMembers();
+}
+
+function saveClasses()  { localStorage.setItem('gym_classes',  JSON.stringify(classes));  }
+function saveMembers()  { localStorage.setItem('gym_members',  JSON.stringify(members));  }
+function saveBookings() { localStorage.setItem('gym_bookings', JSON.stringify(bookings)); }
+
+// ─── NAVIGATION ───
+let currentPage = 'home';
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-'  + page).classList.add('active');
+  currentPage = page;
+  renderPage(page);
+}
+
+function renderPage(page) {
+  if (page === 'home')     renderHome();
+  if (page === 'classes')  renderClasses('all');
+  if (page === 'members')  renderMembers();
+  if (page === 'bookings') renderBookings();
+}
+
+// ─── HOME ───
+function renderHome() {
+  document.getElementById('stat-members').textContent  = members.length;
+  document.getElementById('stat-classes').textContent  = classes.length;
+  document.getElementById('stat-bookings').textContent = bookings.length;
+  const todayDay = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+  const todayClasses = classes.filter(c => c.day === todayDay);
+  document.getElementById('stat-today').textContent = todayClasses.length;
+  document.getElementById('home-sub').textContent =
+    'יש לך ' + classes.length + ' שיעורים ו-' + members.length + ' חברים';
+
+  const list = document.getElementById('home-classes');
+  const show = classes.slice(0, 3);
+  list.innerHTML = show.length ? show.map(classCardHTML).join('') :
+    '<div class="empty"><div class="empty-icon">📅</div><p>אין שיעורים עדיין<br>לחץ + כדי להוסיף</p></div>';
+}
+
+// ─── CLASSES ───
+let currentFilter = 'all';
+function renderClasses(filter) {
+  currentFilter = filter;
+  const filtered = filter === 'all' ? classes : classes.filter(c => c.day === filter);
+  document.getElementById('classes-sub').textContent = filtered.length + ' שיעורים';
+  document.getElementById('classes-list').innerHTML = filtered.length
+    ? filtered.map(classCardHTML).join('')
+    : '<div class="empty"><div class="empty-icon">🏋️</div><p>אין שיעורים ביום זה</p></div>';
+}
+function filterClasses(day, el) {
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderClasses(day);
+}
+function classCardHTML(c) {
+  const spots = c.cap - c.booked;
+  const badgeClass = spots === 0 ? 'full' : spots <= 2 ? 'few' : 'open';
+  const badgeText  = spots === 0 ? 'מלא' : spots + ' מקומות';
+  return `<div class="class-card" onclick="openBook(${c.id})">
+    <div class="class-icon" style="background:${iconBg(c.icon)}">${c.icon}</div>
+    <div class="class-info">
+      <div class="class-name">${c.name}</div>
+      <div class="class-meta">${c.trainer} · ${DAY_NAMES[c.day]} ${c.time}</div>
+    </div>
+    <div class="class-right">
+      <div class="class-time">${c.time}</div>
+      <span class="badge ${badgeClass}">${badgeText}</span>
+    </div>
+  </div>`;
+}
+function iconBg(icon) {
+  const map = { '🧘':'#E1F5EE','⚡':'#EEEDFE','🏋️':'#FAEEDA','🚴':'#E6F1FB','🥊':'#FCEBEB','💃':'#FBEAF0','🏃':'#EAF3DE','🧗':'#FAEEDA' };
+  return map[icon] || '#f0f0f0';
+}
+
+// ─── MEMBERS ───
+function renderMembers() {
+  document.getElementById('members-sub').textContent = members.length + ' חברים';
+  const list = document.getElementById('members-list');
+  list.innerHTML = members.length ? members.map(m => `
+    <div class="member-card">
+      <div class="avatar">${m.name.slice(0,2)}</div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-meta">${m.phone}</div>
+      </div>
+      <span class="plan-badge">${m.plan}</span>
+    </div>`).join('') :
+    '<div class="empty"><div class="empty-icon">👥</div><p>אין חברים עדיין<br>לחץ + כדי להוסיף</p></div>';
+}
+
+// ─── BOOKINGS ───
+function renderBookings() {
+  document.getElementById('bookings-sub').textContent = bookings.length + ' הזמנות';
+  const list = document.getElementById('bookings-list');
+  if (!bookings.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>אין הזמנות עדיין</p></div>';
+    return;
+  }
+  list.innerHTML = bookings.map((b, i) => {
+    const cls = classes.find(c => c.id === b.classId);
+    const mem = members.find(m => m.id === b.memberId);
+    if (!cls || !mem) return '';
+    return `<div class="booking-card">
+      <div class="booking-dot"></div>
+      <div class="booking-info">
+        <div class="booking-name">${mem.name}</div>
+        <div class="booking-meta">${cls.name} · ${DAY_NAMES[cls.day]} ${cls.time}</div>
+      </div>
+      <button class="btn-cancel-book" onclick="cancelBooking(${i})">ביטול</button>
+    </div>`;
+  }).join('');
+}
+
+// ─── ADD CLASS ───
+function addClass() {
+  const name    = document.getElementById('cls-name').value.trim();
+  const trainer = document.getElementById('cls-trainer').value.trim();
+  const day     = document.getElementById('cls-day').value;
+  const time    = document.getElementById('cls-time').value;
+  const cap     = parseInt(document.getElementById('cls-cap').value) || 10;
+  const icon    = document.getElementById('cls-icon').value;
+  if (!name) { toast('נא למלא שם שיעור'); return; }
+  classes.push({ id: Date.now(), name, trainer, day, time, cap, icon, booked:0 });
+  saveClasses();
+  closeModal('modal-class');
+  toast('✅ השיעור נוסף בהצלחה!');
+  renderPage(currentPage);
+}
+
+// ─── ADD MEMBER ───
+function addMember() {
+  const name  = document.getElementById('mem-name').value.trim();
+  const phone = document.getElementById('mem-phone').value.trim();
+  const plan  = document.getElementById('mem-plan').value;
+  if (!name) { toast('נא למלא שם'); return; }
+  members.push({ id: Date.now(), name, phone, plan });
+  saveMembers();
+  closeModal('modal-member');
+  toast('✅ החבר נוסף בהצלחה!');
+  renderPage(currentPage);
+}
+
+// ─── BOOK CLASS ───
+let bookingClassId = null;
+function openBook(classId) {
+  const cls = classes.find(c => c.id === classId);
+  if (!cls) return;
+  if (cls.booked >= cls.cap) { toast('השיעור מלא'); return; }
+  if (!members.length) { toast('יש להוסיף חברים קודם'); return; }
+  bookingClassId = classId;
+  document.getElementById('book-title').textContent = 'הזמנה: ' + cls.name;
+  document.getElementById('book-sub').textContent   = DAY_NAMES[cls.day] + ' ' + cls.time + ' · ' + (cls.cap - cls.booked) + ' מקומות פנויים';
+  const sel = document.getElementById('book-member');
+  sel.innerHTML = members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  openModal('modal-book');
+}
+function confirmBook() {
+  const memberId = parseInt(document.getElementById('book-member').value);
+  const cls = classes.find(c => c.id === bookingClassId);
+  if (!cls) return;
+  const already = bookings.find(b => b.classId === bookingClassId && b.memberId === memberId);
+  if (already) { toast('החבר כבר רשום לשיעור זה'); return; }
+  bookings.push({ classId: bookingClassId, memberId });
+  cls.booked++;
+  saveBookings(); saveClasses();
+  closeModal('modal-book');
+  const mem = members.find(m => m.id === memberId);
+  toast('✅ ' + mem.name + ' נרשם לשיעור!');
+  renderPage(currentPage);
+}
+function cancelBooking(index) {
+  const b = bookings[index];
+  const cls = classes.find(c => c.id === b.classId);
+  if (cls && cls.booked > 0) cls.booked--;
+  bookings.splice(index, 1);
+  saveBookings(); saveClasses();
+  toast('הזמנה בוטלה');
+  renderBookings();
+}
+
+// ─── FAB ───
+function openFab() { openModal('modal-fab'); }
+
+// ─── MODALS ───
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ─── TOAST ───
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ───
+renderHome();
+</script>
+</body>
+</html>
