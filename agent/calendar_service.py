@@ -1,18 +1,35 @@
 import os
+import json
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Jerusalem")
 CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID", "primary")
+CREDENTIALS_FILE = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
+TOKEN_FILE = os.getenv("GOOGLE_TOKEN_FILE", "token.json")
 
 
 def _get_service():
-    key_file = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "service_account.json")
-    creds = service_account.Credentials.from_service_account_file(key_file, scopes=SCOPES)
+    creds = None
+
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(TOKEN_FILE, "w") as f:
+            f.write(creds.to_json())
+
     return build("calendar", "v3", credentials=creds)
 
 
