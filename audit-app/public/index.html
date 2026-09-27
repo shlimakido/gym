@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ביקורת 360°</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <a href="#/" class="brand">ביקורת 360°</a>
+  <span class="muted" id="model"></span>
+</header>
+
+<main id="app">
+  <!-- רשימה + טופס -->
+  <section id="view-home" hidden>
+    <div class="grid">
+      <form id="form" class="card" novalidate>
+        <h1>ביקורת חדשה</h1>
+        <p class="muted">ממלאים את פרטי הלקוח, מצרפים חומרים ומריצים. המערכת עוברת את כל ההיררכיה: מיפוי, 24 תתי-סוכנים, 6 מפקחים, מתאם ראשי ורשימת אימות לבודק האנושי.</p>
+
+        <fieldset>
+          <legend>פרטי הלקוח</legend>
+          <div id="client-fields"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>חומרים מצורפים</legend>
+          <label class="field">צילומי מסך (ימוספרו S1, S2… לפי הסדר)
+            <input type="file" id="shots" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+          </label>
+          <ol id="shots-list" class="files"></ol>
+          <label class="field">קבצי קוד או טקסט (ימוספרו F1, F2…)
+            <input type="file" id="files" multiple>
+          </label>
+          <ol id="files-list" class="files"></ol>
+          <label class="field">נתוני אנליטיקס (הדבקה חופשית: המרה, נטישה, Core Web Vitals…)
+            <textarea id="analytics" rows="3"></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>משקלות המחלקות</legend>
+          <p class="muted small">ברירת המחדל לפי הבריף. מחלקה שלא רלוונטית למוצר מקבלת משקל 0 ויוצאת מהציון הכולל.</p>
+          <div id="weights" class="weights"></div>
+        </fieldset>
+
+        <p class="note">בדיקה פסיבית בלבד: המערכת טוענת עמודים כמו דפדפן רגיל. אין התחברות, אין שליחת טפסים ואין סריקות.</p>
+        <p id="form-error" class="error" role="alert"></p>
+        <button type="submit" class="primary" id="submit">הרצת ביקורת</button>
+      </form>
+
+      <aside class="card">
+        <h2>ביקורות קודמות</h2>
+        <ul id="history" class="history"><li class="muted">טוען…</li></ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ביקורת -->
+  <section id="view-audit" hidden>
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1 id="a-title"></h1>
+          <p class="muted" id="a-sub"></p>
+        </div>
+        <span id="a-status" class="pill"></span>
+      </div>
+      <ol id="stages" class="stages"></ol>
+      <div id="agents" class="agents"></div>
+      <details id="log-wrap"><summary>יומן ריצה</summary><ol id="log" class="log"></ol></details>
+      <p id="a-error" class="error" role="alert"></p>
+    </div>
+
+    <div id="result" hidden>
+      <div class="card">
+        <div class="row">
+          <h2>רשימת אימות לבודק האנושי</h2>
+          <span id="v-count" class="pill"></span>
+        </div>
+        <p class="muted small">כל ממצא בוודאות 🟡 או ⚪. הדו"ח ללקוח נפתח להורדה רק אחרי שכל הפריטים סומנו.</p>
+        <ul id="verify" class="verify"></ul>
+        <div class="actions">
+          <a id="dl-internal" class="button" download>הורדת הדו"ח הפנימי</a>
+          <a id="dl-client" class="button primary" aria-disabled="true">הורדת הדו"ח ללקוח</a>
+        </div>
+      </div>
+      <iframe id="report" title="הדו״ח" class="report-frame"></iframe>
+    </div>
+  </section>
+</main>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>
