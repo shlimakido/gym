@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תקי</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@700;900&family=Secular+One&display=swap" rel="stylesheet">
+<style>
+/* Layout: a family kitchen table. Gingham oilcloth fills the screen, the other players sit along
+   the top edge, the draw pile and the discard pile sit in the middle, your hand fans out at the bottom. */
+:root {
+  --cloth: #f4f6fb;
+  --check: rgba(58, 104, 190, .15);
+  --ink: #1b2236;
+  --ink-soft: #586178;
+  --chip: rgba(255, 255, 255, .92);
+  --chip-edge: rgba(27, 34, 54, .12);
+  --sheet: #ffffff;
+  --btn: #1d2c5a;
+  --btn-ink: #ffffff;
+  --focus: #f4b400;
+  --warn: #b3261e;
+  --shadow: rgba(22, 32, 64, .24);
+  --scrim: rgba(17, 22, 38, .5);
+
+  /* the cards are physical objects, so they look the same in both themes */
+  --c-red: #e0393e;
+  --c-yellow: #f4b400;
+  --c-green: #1f9a57;
+  --c-blue: #2b6ad6;
+  --c-wild: #262833;
+  --card-edge: #fdfcf8;
+  --glyph: #ffffff;
+  --glyph-edge: rgba(0, 0, 0, .3);
+  --sheen: rgba(255, 255, 255, .14);
+  --back: #1d2c5a;
+  --back-2: #26397a;
+  --on-yellow: #3a2b00;
+
+  --f-display: 'Secular One', 'Assistant', system-ui, sans-serif;
+  --f-body: 'Assistant', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --f-card: 'Rubik', 'Assistant', system-ui, sans-serif;
+
+  --cw: clamp(52px, min(14.5vw, 14vh), 96px);  /* card in hand */
+  --pw: clamp(68px, min(19vw, 18vh), 128px);   /* card on the table */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cloth: #121829;
+    --check: rgba(110, 140, 225, .10);
+    --ink: #eef1f8;
+    --ink-soft: #a3acc3;
+    --chip: rgba(27, 34, 54, .92);
+    --chip-edge: rgba(255, 255, 255, .12);
+    --sheet: #1a2134;
+    --btn: #f4b400;
+    --btn-ink: #1b2236;
+    --warn: #ff8a80;
+    --shadow: rgba(0, 0, 0, .5);
+    --scrim: rgba(0, 0, 0, .6);
+    --back: #14204a;
+    --back-2: #1d2c5a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --cloth: #121829;
+  --check: rgba(110, 140, 225, .10);
+  --ink: #eef1f8;
+  --ink-soft: #a3acc3;
+  --chip: rgba(27, 34, 54, .92);
+  --chip-edge: rgba(255, 255, 255, .12);
+  --sheet: #1a2134;
+  --btn: #f4b400;
+  --btn-ink: #1b2236;
+  --warn: #ff8a80;
+  --shadow: rgba(0, 0, 0, .5);
+  --scrim: rgba(0, 0, 0, .6);
+  --back: #14204a;
+  --back-2: #1d2c5a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--f-body);
+  font-size: 15px;
+  color: var(--ink);
+  background-color: var(--cloth);
+  background-image:
+    linear-gradient(90deg, var(--check) 50%, transparent 50%),
+    linear-gradient(var(--check) 50%, transparent 50%);
+  background-size: 44px 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible + span, input[type="text"]:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 2px;
+}
+#root { min-height: 100%; display: flex; flex-direction: column; }
+
+.app {
+  flex: 1;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 10px;
+  padding-block: 10px 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ─── header ─── */
+.bar { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 3px; padding-inline-end: 4px; }
+.tile {
+  width: 26px; height: 36px; border-radius: 5px;
+  display: grid; place-items: center;
+  font-family: var(--f-display); font-size: 21px; line-height: 1;
+  color: var(--glyph);
+  border: 2px solid var(--card-edge);
+  box-shadow: 0 2px 6px var(--shadow);
+}
+.tile:nth-child(1) { background: var(--c-red); transform: rotate(-7deg); }
+.tile:nth-child(2) { background: var(--c-green); transform: rotate(3deg) translateY(-2px); }
+.tile:nth-child(3) { background: var(--c-blue); transform: rotate(-2deg); }
+.round { font-size: 13px; font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
+.spacer { flex: 1; }
+.chip-btn {
+  border: 1px solid var(--chip-edge); background: var(--chip);
+  border-radius: 999px; padding: 6px 14px;
+  font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap;
+}
+.chip-btn:hover { border-color: var(--ink-soft); }
+
+/* ─── opponents ─── */
+.opps { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 8px; }
+.seat {
+  position: relative; min-width: 0;
+  background: var(--chip); border: 1px solid var(--chip-edge); border-radius: 14px;
+  padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;
+  transition: box-shadow .2s, transform .2s;
+}
+.seat.on { box-shadow: 0 0 0 3px var(--focus), 0 6px 18px var(--shadow); transform: translateY(2px); }
+.seat.won { box-shadow: 0 0 0 3px var(--c-green), 0 6px 18px var(--shadow); }
+.seat-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.seat-id { min-width: 0; }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 15px;
+  background: var(--av); color: var(--av-ink, var(--glyph));
+}
+.avatar.sm { width: 26px; height: 26px; font-size: 13px; }
+.seat-name { font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seat-count { font-size: 12px; color: var(--ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mini-fan { display: flex; align-items: center; height: 30px; }
+.mini {
+  width: 20px; height: 30px; flex-shrink: 0; border-radius: 4px;
+  margin-inline-start: -13px;
+  border: 2px solid var(--card-edge);
+  background: repeating-linear-gradient(45deg, var(--back) 0 4px, var(--back-2) 4px 8px);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+.mini:first-child { margin-inline-start: 0; }
+.more { font-size: 12px; font-weight: 800; color: var(--ink-soft); margin-inline-start: 6px; }
+.dots i { font-style: normal; animation: blink 1.2s infinite both; }
+.dots i:nth-child(2) { animation-delay: .2s; }
+.dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 100% { opacity: .2; } 40% { opacity: 1; } }
+
+.bubble {
+  position: absolute; top: -14px; inset-inline-end: 8px; z-index: 5;
+  background: var(--ink); color: var(--cloth);
+  font-family: var(--f-display); font-size: 15px; white-space: nowrap;
+  padding: 3px 12px; border-radius: 12px;
+  pointer-events: none;
+  animation: pop 2.4s ease both;
+}
+@keyframes pop {
+  0% { opacity: 0; transform: translateY(6px) scale(.7); }
+  8% { opacity: 1; transform: none; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ─── table ─── */
+.table {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(14px, 6vw, 56px);
+  padding-block: 8px 24px;
+}
+.pile-wrap { position: relative; }
+.pile { position: relative; width: var(--pw); aspect-ratio: 2 / 3; flex-shrink: 0; }
+.deck { appearance: none; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 10% / 6.667%; }
+.deck[aria-disabled="true"] { cursor: default; }
+.deck .stk { position: absolute; inset: 0; border-radius: 10% / 6.667%; box-shadow: 0 3px 10px var(--shadow); }
+.deck .stk:nth-child(1) { transform: translate(-5px, 5px); }
+.deck .stk:nth-child(2) { transform: translate(-2.5px, 2.5px); }
+.deck:not([aria-disabled="true"]):hover .stk:last-child { transform: translateY(-4px); }
+.pile-label {
+  position: absolute; top: 100%; inset-inline: -20px; margin-top: 10px;
+  text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.discard::before {
+  content: ""; position: absolute; inset: -22%; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--cur), transparent);
+  opacity: .5; transition: background .3s;
+}
+.pcard {
+  position: absolute; inset: 0;
+  border-radius: 10% / 6.667%;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .1), 0 6px 14px var(--shadow);
+  transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+}
+.pcard.land { animation: land .38s cubic-bezier(.2, .8, .25, 1) both; }
+@keyframes land {
+  from { transform: translate(var(--fx), var(--fy)) rotate(calc(var(--rot) * -2)) scale(1.12); opacity: .3; }
+}
+.mid {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: 104px; text-align: center; font-size: 13px; font-weight: 700;
+}
+.cur-color { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dot { width: 30px; height: 30px; border-radius: 50%; background: var(--cur); box-shadow: 0 0 0 3px var(--card-edge), 0 2px 8px var(--shadow); }
+.next { display: flex; align-items: center; gap: 4px; color: var(--ink-soft); font-size: 12px; }
+.next svg { width: 16px; height: 16px; flex-shrink: 0; }
+.next svg.flip { transform: scaleX(-1); }
+.next b { color: var(--ink); max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pend {
+  background: var(--c-red); color: var(--glyph);
+  font-family: var(--f-card); font-weight: 900; font-size: 18px;
+  padding: 2px 12px; border-radius: 999px;
+  box-shadow: 0 0 0 3px var(--card-edge);
+  animation: throb 1s ease-in-out infinite;
+}
+@keyframes throb { 50% { transform: scale(1.1); } }
+.flag {
+  background: var(--ink); color: var(--cloth);
+  font-family: var(--f-display); font-size: 13px; font-weight: 400;
+  padding: 2px 10px; border-radius: 8px;
+}
+
+/* ─── status ─── */
+.status {
+  justify-self: center; max-width: 100%;
+  background: var(--chip); border: 1px solid var(--chip-edge); border-radius: 14px;
+  padding: 6px 16px; text-align: center;
+  display: flex; flex-direction: column; gap: 1px;
+  min-height: 52px; justify-content: center;
+}
+.status .ev { font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+.status .turn { font-family: var(--f-display); font-size: 18px; line-height: 1.3; }
+.status .warn { color: var(--warn); }
+
+/* ─── me ─── */
+.me {
+  position: relative;
+  background: var(--chip); border: 1px solid var(--chip-edge); border-radius: 18px;
+  padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px;
+  transition: box-shadow .2s;
+}
+.me.on { box-shadow: 0 0 0 3px var(--focus), 0 6px 18px var(--shadow); }
+.me-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.me-head .seat-id { flex: 1; }
+.btn {
+  border: 0; border-radius: 12px; padding: 10px 18px;
+  background: var(--btn); color: var(--btn-ink);
+  font-weight: 800; font-size: 15px; cursor: pointer; white-space: nowrap;
+}
+.btn:disabled { opacity: .35; cursor: default; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--chip-edge); }
+.hand {
+  display: flex; justify-content: center;
+  padding-top: 16px;
+  min-height: calc(var(--cw) * 1.5 + 16px);
+}
+.card {
+  appearance: none; border: 0; padding: 0; background: none;
+  flex-shrink: 0; display: block; position: relative;
+  width: var(--cw); aspect-ratio: 2 / 3;
+  border-radius: 10% / 6.667%;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .1), 0 5px 12px var(--shadow);
+  cursor: pointer;
+  transition: transform .16s ease, filter .2s;
+}
+.hand .card { margin-inline-start: var(--ov, 6px); }
+.hand .card:first-child { margin-inline-start: 0; }
+.hand.mine .card.ok { transform: translateY(-12px); }
+.hand.mine .card.ok:hover { transform: translateY(-20px); }
+.hand.mine .card.no { filter: saturate(.6) brightness(.92); }
+.card.deal { animation: deal .42s ease-out both; }
+@keyframes deal { from { transform: translateY(-80px) scale(.7) rotate(-8deg); opacity: 0; } }
+.card.nudge { animation: nudge .35s; }
+@keyframes nudge { 25% { translate: 6px 0; } 50% { translate: -6px 0; } 75% { translate: 3px 0; } }
+.card svg, .pcard svg, .stk svg, .mini-card svg { display: block; width: 100%; height: 100%; direction: ltr; }
+.me .bubble { top: -16px; inset-inline-end: auto; inset-inline-start: 50%; translate: 50% 0; }
+
+/* svg card faces */
+.f-edge { fill: var(--card-edge); }
+.f-red { fill: var(--c-red); }
+.f-yellow { fill: var(--c-yellow); }
+.f-green { fill: var(--c-green); }
+.f-blue { fill: var(--c-blue); }
+.f-wild { fill: var(--c-wild); }
+.f-sheen { fill: var(--sheen); }
+.f-back { fill: var(--back); }
+.f-stripe { fill: var(--back-2); }
+.g { fill: var(--glyph); stroke: var(--glyph-edge); stroke-width: 5; paint-order: stroke; stroke-linejoin: round; }
+.gs { stroke-width: 2.6; }
+.gt { font-family: var(--f-card); font-weight: 900; text-anchor: middle; }
+.ring { fill: none; stroke: var(--glyph); stroke-width: 4; }
+.bk-oval { fill: var(--c-red); stroke: var(--card-edge); stroke-width: 3; }
+.bk-word { font-family: var(--f-display); font-size: 30px; fill: var(--glyph); text-anchor: middle; }
+
+/* ─── overlays ─── */
+.scrim {
+  position: fixed; inset: 0; z-index: 50;
+  background: var(--scrim);
+  display: grid; place-items: center;
+  padding: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet {
+  width: 100%; max-width: 440px; max-height: 100%; overflow-y: auto;
+  background: var(--sheet); color: var(--ink);
+  border-radius: 20px; padding: 20px;
+  box-shadow: 0 20px 50px var(--shadow);
+  display: flex; flex-direction: column; gap: 14px;
+  animation: rise .22s ease-out both;
+}
+@keyframes rise { from { transform: translateY(20px); opacity: 0; } }
+.sheet h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; text-wrap: balance; }
+.sheet p { margin: 0; line-height: 1.55; }
+.sheet-head { display: flex; align-items: center; gap: 10px; }
+.sheet-head h2 { flex: 1; }
+.x { border: 0; background: none; font-size: 26px; line-height: 1; cursor: pointer; color: var(--ink-soft); padding: 4px 8px; border-radius: 8px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row .btn { flex: 1; }
+
+.swatches { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.swatch {
+  border: 0; border-radius: 16px; cursor: pointer;
+  height: 78px; display: grid; place-items: center;
+  font-family: var(--f-display); font-size: 22px; color: var(--glyph);
+  box-shadow: 0 0 0 3px var(--card-edge) inset, 0 4px 12px var(--shadow);
+  transition: transform .12s;
+}
+.swatch:hover { transform: translateY(-2px); }
+.swatch[data-c="red"] { background: var(--c-red); }
+.swatch[data-c="yellow"] { background: var(--c-yellow); color: var(--on-yellow); }
+.swatch[data-c="green"] { background: var(--c-green); }
+.swatch[data-c="blue"] { background: var(--c-blue); }
+
+.big-title { font-family: var(--f-display); font-size: 38px; line-height: 1.1; text-align: center; margin: 0; }
+.center { text-align: center; color: var(--ink-soft); }
+.label { font-size: 12px; font-weight: 800; color: var(--ink-soft); letter-spacing: .04em; }
+.board { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.board li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; border-radius: 10px; border: 1px solid var(--chip-edge);
+}
+.board li.w { border-color: var(--c-green); box-shadow: 0 0 0 1px var(--c-green) inset; }
+.b-name { flex: 1; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b-wins { font-family: var(--f-card); font-weight: 900; font-variant-numeric: tabular-nums; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field input[type="text"] {
+  font: inherit; font-size: 16px; padding: 10px 12px;
+  border-radius: 10px; border: 1px solid var(--chip-edge);
+  background: var(--cloth); color: var(--ink); width: 100%;
+}
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span {
+  display: block; text-align: center; padding: 10px 6px; border-radius: 10px;
+  border: 1px solid var(--chip-edge); font-weight: 700; font-size: 14px;
+}
+.seg input:checked + span { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); }
+.link-btn { border: 0; background: none; padding: 0; color: var(--ink-soft); text-decoration: underline; cursor: pointer; font-size: 13px; align-self: flex-start; }
+
+.rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rules li { display: flex; gap: 12px; align-items: center; line-height: 1.45; }
+.mini-card { width: 40px; aspect-ratio: 2 / 3; flex-shrink: 0; border-radius: 4px; box-shadow: 0 2px 6px var(--shadow); }
+.note { font-size: 14px; color: var(--ink-soft); }
+
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60; }
+
+@media (max-width: 480px) {
+  .seat { padding: 7px 8px; }
+  .avatar { width: 28px; height: 28px; font-size: 13px; }
+  .seat-name { font-size: 13px; }
+  .status .turn { font-size: 16px; }
+  .btn { padding: 9px 14px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+  .bubble { animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="root" dir="rtl" lang="he">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="stripes" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="5" height="10" class="f-stripe"/>
+    </pattern>
+  </defs>
+</svg>
+
+<main class="app">
+  <header class="bar">
+    <div class="brand" aria-label="תקי"><span class="tile">ת</span><span class="tile">ק</span><span class="tile">י</span></div>
+    <span class="round" id="round"></span>
+    <span class="spacer"></span>
+    <button class="chip-btn" id="btn-rules" type="button">חוקים</button>
+    <button class="chip-btn" id="btn-new" type="button">משחק חדש</button>
+  </header>
+
+  <section class="opps" id="opps" aria-label="שחקנים אחרים"></section>
+
+  <section class="table" aria-label="שולחן">
+    <div class="pile-wrap">
+      <button class="pile deck" id="deck" type="button"></button>
+      <div class="pile-label" id="deck-label"></div>
+    </div>
+    <div class="mid" id="mid"></div>
+    <div class="pile discard" id="discard" aria-live="polite"></div>
+  </section>
+
+  <div class="status" id="status" aria-live="polite"></div>
+
+  <section class="me" id="me" aria-label="היד שלך">
+    <div class="me-head">
+      <span class="avatar" id="me-av"></span>
+      <div class="seat-id">
+        <div class="seat-name" id="me-name"></div>
+        <div class="seat-count" id="me-count"></div>
+      </div>
+      <button class="btn" id="btn-act" type="button">לשלוף קלף</button>
+    </div>
+    <div class="hand" id="hand"></div>
+    <div id="me-bubble"></div>
+  </section>
+</main>
+
+<!-- color picker -->
+<div class="scrim" id="pick" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pick-t">
+    <h2 id="pick-t">לאיזה צבע עוברים?</h2>
+    <div class="swatches">
+      <button class="swatch" type="button" data-c="red">אדום</button>
+      <button class="swatch" type="button" data-c="yellow">צהוב</button>
+      <button class="swatch" type="button" data-c="green">ירוק</button>
+      <button class="swatch" type="button" data-c="blue">כחול</button>
+    </div>
+  </div>
+</div>
+
+<!-- round over -->
+<div class="scrim" id="over" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="over-t">
+    <p class="big-title" id="over-t"></p>
+    <p class="center" id="over-sub"></p>
+    <div class="label">ניצחונות</div>
+    <ol class="board" id="over-board"></ol>
+    <div class="row">
+      <button class="btn" id="btn-again" type="button">עוד סיבוב</button>
+      <button class="btn ghost" id="btn-over-settings" type="button">הגדרות</button>
+    </div>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="scrim" id="settings" hidden>
+  <form class="sheet" id="settings-form" role="dialog" aria-modal="true" aria-labelledby="settings-t">
+    <div class="sheet-head">
+      <h2 id="settings-t">משחק חדש</h2>
+      <button class="x" type="button" data-close="settings" aria-label="סגירה">×</button>
+    </div>
+    <label class="field">
+      <span class="label">השם שלך</span>
+      <input type="text" id="opt-name" maxlength="14" autocomplete="off">
+    </label>
+    <div class="field">
+      <span class="label">כמה שחקנים נגדך</span>
+      <div class="seg" role="radiogroup">
+        <label><input type="radio" name="opps" id="opt-o1" value="1"><span>שחקן אחד</span></label>
+        <label><input type="radio" name="opps" id="opt-o2" value="2"><span>שניים</span></label>
+        <label><input type="radio" name="opps" id="opt-o3" value="3"><span>שלושה</span></label>
+      </div>
+    </div>
+    <div class="label">ניצחונות עד עכשיו</div>
+    <ol class="board" id="settings-board"></ol>
+    <button class="link-btn" type="button" id="btn-reset">איפוס ניצחונות</button>
+    <button class="btn" type="submit">לחלק קלפים</button>
+  </form>
+</div>
+
+<!-- rules -->
+<div class="scrim" id="rules" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rules-t">
+    <div class="sheet-head">
+      <h2 id="rules-t">איך משחקים תקי</h2>
+      <button class="x" type="button" data-close="rules" aria-label="סגירה">×</button>
+    </div>
+    <p>כל שחקן מקבל 8 קלפים. מי שנפטר ראשון מכל הקלפים מנצח.</p>
+    <p>בכל תור שמים קלף שמתאים לקלף העליון בערימה: באותו צבע, או באותו מספר או סימן. אין קלף מתאים? שולפים קלף מהקופה והתור עובר.</p>
+    <ul class="rules">
+      <li><span class="mini-card" data-mini="stop:red"></span><span><b>עצור</b>: השחקן הבא מפסיד את התור.</span></li>
+      <li><span class="mini-card" data-mini="dir:blue"></span><span><b>שנה כיוון</b>: המשחק ממשיך לכיוון השני.</span></li>
+      <li><span class="mini-card" data-mini="plus:green"></span><span><b>פלוס</b>: חייבים לשים עוד קלף. אין? שולפים קלף אחד.</span></li>
+      <li><span class="mini-card" data-mini="plus2:yellow"></span><span><b><bdi dir="ltr">+2</bdi></b>: הבא בתור שולף 2 קלפים. מי שיש בידו <bdi dir="ltr">+2</bdi> יכול לשים אותו, ואז הקלפים מצטברים ועוברים הלאה.</span></li>
+      <li><span class="mini-card" data-mini="taki:red"></span><span><b>תקי</b>: פותח רצף. אפשר לשים אחריו את כל הקלפים באותו צבע ואז לסגור. הקלף האחרון ברצף פועל כרגיל.</span></li>
+      <li><span class="mini-card" data-mini="color"></span><span><b>שנה צבע</b>: אפשר לשים על כל קלף ולבחור את הצבע הבא.</span></li>
+      <li><span class="mini-card" data-mini="super"></span><span><b>סופר תקי</b>: אפשר לשים על כל קלף. הוא נהיה תקי בצבע הנוכחי.</span></li>
+    </ul>
+    <p class="note">אי אפשר לסיים בפלוס: אם הוא הקלף האחרון ביד, שולפים קלף.</p>
+    <button class="btn" type="button" data-close="rules">הבנתי</button>
+  </div>
+</div>
+
+<canvas id="fx" hidden></canvas>
+</div>
+
+<script>
+'use strict';
+
+// ─── CONSTANTS ───
+const COLORS = ['red', 'yellow', 'green', 'blue'];
+const HE = { red: 'אדום', yellow: 'צהוב', green: 'ירוק', blue: 'כחול' };
+const HAND_SIZE = 8;
+const OPP_POOL = [
+  { name: 'סבתא רחל', fem: true,  av: 'red' },
+  { name: 'דוד משה',  fem: false, av: 'blue' },
+  { name: 'נועה',     fem: true,  av: 'green' },
+];
+const TYPE_ORDER = { num: 0, plus: 1, plus2: 2, stop: 3, dir: 4, taki: 5, color: 6, super: 7 };
+const PLUS2 = '<bdi dir="ltr">+2</bdi>';
+let SPEED = 1; // multiplier for computer move delays
+
+const $ = s => document.querySelector(s);
+const now = () => Date.now();
+const rnd = (a, b) => a + Math.random() * (b - a);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const firstChar = s => [...String(s)][0] || '?';
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+
+let settings = Object.assign({ name: 'אני', opps: 2 }, store.get('taki_settings', {}));
+let score = store.get('taki_score', {});
+let G = null;
+let round = 0;
+let aiTimer = 0, overTimer = 0, hintTimer = 0;
+
+// ─── DECK ───
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildDeck() {
+  const d = [];
+  let id = 0;
+  for (const color of COLORS) {
+    for (let v = 1; v <= 9; v++) for (let k = 0; k < 2; k++) d.push({ id: id++, color, type: 'num', value: v });
+    for (const type of ['stop', 'dir', 'plus', 'plus2', 'taki']) for (let k = 0; k < 2; k++) d.push({ id: id++, color, type });
+  }
+  for (let k = 0; k < 4; k++) d.push({ id: id++, color: null, type: 'color' });
+  for (let k = 0; k < 2; k++) d.push({ id: id++, color: null, type: 'super' });
+  return shuffle(d);
+}
+
+// ─── CARD ART ───
+const OCT = '-11.6,-28 11.6,-28 28,-11.6 28,11.6 11.6,28 -11.6,28 -28,11.6 -28,-11.6';
+const ARROWS = 'M24 -16.5H-8V-26L-28 -12L-8 2V-7.5H24Z M-24 7.5H8V-2L28 12L8 26V16.5H-24Z';
+const PLUS = 'M-7 -28H7V-7H28V7H7V28H-7V7H-28V-7H-7Z';
+const SUPER_BANDS = COLORS.map((c, i) => {
+  const y = 52 + i * 20;
+  return `<polygon class="f-${c}" opacity=".85" points="5,${y} 95,${y - 30} 95,${y - 12} 5,${y + 18}"/>`;
+}).join('');
+
+function wheel(r) {
+  return `<path class="f-red" d="M0 0V${-r}A${r} ${r} 0 0 1 ${r} 0Z"/>` +
+    `<path class="f-yellow" d="M0 0H${r}A${r} ${r} 0 0 1 0 ${r}Z"/>` +
+    `<path class="f-green" d="M0 0V${r}A${r} ${r} 0 0 1 ${-r} 0Z"/>` +
+    `<path class="f-blue" d="M0 0H${-r}A${r} ${r} 0 0 1 0 ${-r}Z"/>` +
+    `<circle r="${r}" class="ring"/>`;
+}
+
+function bigGlyph(c) {
+  switch (c.type) {
+    case 'num':
+      return `<text class="g gt" y="23" font-size="66">${c.value}</text>` +
+        (c.value === 6 || c.value === 9 ? '<rect class="g" x="-13" y="31" width="26" height="6" rx="3"/>' : '');
+    case 'stop': return `<polygon class="g" points="${OCT}"/><rect class="f-${c.color}" x="-17" y="-5" width="34" height="10" rx="2"/>`;
+    case 'dir': return `<path class="g" d="${ARROWS}"/>`;
+    case 'plus': return `<path class="g" d="${PLUS}"/>`;
+    case 'plus2': return '<text class="g gt" y="19" font-size="54">+2</text>';
+    case 'taki': return '<text class="g gt" y="14" font-size="40">תקי</text>';
+    case 'color': return wheel(30);
+    case 'super': return '<text class="g gt" y="-12" font-size="21">סופר</text><text class="g gt" y="26" font-size="40">תקי</text>';
+  }
+  return '';
+}
+
+function cornerGlyph(c) {
+  switch (c.type) {
+    case 'num': return `<text class="g gt gs" y="8.5" font-size="24">${c.value}</text>`;
+    case 'plus2': return '<text class="g gt gs" y="7" font-size="19">+2</text>';
+    case 'taki': return '<text class="g gt gs" y="5.5" font-size="15">תקי</text>';
+    case 'super': return `<g transform="scale(.38)">${wheel(30)}</g><text class="g gt gs" y="4.5" font-size="13">ת</text>`;
+  }
+  return `<g transform="scale(.36)">${bigGlyph(c)}</g>`;
+}
+
+function cardSVG(c) {
+  const fill = c.color ? 'f-' + c.color : 'f-wild';
+  const corner = cornerGlyph(c);
+  return `<svg viewBox="0 0 100 150" aria-hidden="true">` +
+    `<rect width="100" height="150" rx="10" class="f-edge"/>` +
+    `<rect x="5" y="5" width="90" height="140" rx="7" class="${fill}"/>` +
+    (c.type === 'super' ? SUPER_BANDS : '<polygon class="f-sheen" points="5,108 95,34 95,62 5,136"/>') +
+    `<g transform="translate(50 75)">${bigGlyph(c)}</g>` +
+    `<g transform="translate(80 21)">${corner}</g>` +
+    `<g transform="translate(20 129) rotate(180)">${corner}</g>` +
+    `</svg>`;
+}
+
+const BACK_SVG = '<svg viewBox="0 0 100 150" aria-hidden="true">' +
+  '<rect width="100" height="150" rx="10" class="f-edge"/>' +
+  '<rect x="5" y="5" width="90" height="140" rx="7" class="f-back"/>' +
+  '<rect x="5" y="5" width="90" height="140" rx="7" fill="url(#stripes)"/>' +
+  '<ellipse cx="50" cy="75" rx="31" ry="47" transform="rotate(-20 50 75)" class="bk-oval"/>' +
+  '<text x="50" y="86" class="bk-word">תקי</text></svg>';
+
+function symName(c) {
+  return { stop: 'עצור', dir: 'שנה כיוון', plus: 'פלוס', plus2: PLUS2, taki: 'תקי', color: 'שנה צבע', super: 'סופר תקי' }[c.type];
+}
+function cardName(c) {
+  if (c.type === 'num') return `${c.value} ${HE[c.color]}`;
+  return c.color ? `${symName(c)} ${HE[c.color]}` : symName(c);
+}
+const plain = html => html.replace(/<[^>]+>/g, '');
+
+// ─── STATE HELPERS ───
+const topCard = () => G.discard[G.discard.length - 1];
+const nextIndex = (steps = 1) => {
+  const n = G.players.length;
+  return (((G.cur + G.dir * steps) % n) + n) % n;
+};
+const countText = n => n === 0 ? 'אין קלפים' : n === 1 ? 'קלף אחד' : `${n} קלפים`;
+// who(i, 'שמת', 'שם', 'שמה') → "שמת" for you, "נועה שמה" for a computer player
+function who(pi, you, m, f) {
+  const p = G.players[pi];
+  return p.human ? you : `${esc(p.name)} ${p.fem ? f : m}`;
+}
+function say(html) {
+  G.log.push(html);
+  if (G.log.length > 40) G.log.shift();
+}
+function bubble(pi, text) {
+  G.bubbles[pi] = { text, at: now() };
+  setTimeout(() => G && render(), 2500);
+}
+function avStyle(p) {
+  return `--av:var(--c-${p.av})` + (p.av === 'yellow' ? ';--av-ink:var(--on-yellow)' : '');
+}
+function colorCounts(hand) {
+  const n = { red: 0, yellow: 0, green: 0, blue: 0 };
+  for (const c of hand) if (c.color) n[c.color]++;
+  return n;
+}
+function sortHand(p) {
+  const ci = c => c.color ? COLORS.indexOf(c.color) : 9;
+  p.hand.sort((a, b) => ci(a) - ci(b) || TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || (a.value || 0) - (b.value || 0));
+}
+
+function canPlay(c) {
+  if (!G || !c) return false;
+  if (G.pending > 0) return c.type === 'plus2';
+  if (G.taki) return c.color === G.taki.color || c.type === 'color';
+  if (c.type === 'color' || c.type === 'super') return true;
+  if (c.color === G.color) return true;
+  const t = topCard();
+  if (c.type === 'num') return t.type === 'num' && t.value === c.value;
+  return t.type === c.type;
+}
+
+// ─── GAME FLOW ───
+function newGame() {
+  clearTimeout(aiTimer); clearTimeout(overTimer);
+  closeAll();
+  const deck = buildDeck();
+  const players = [
+    { name: settings.name || 'אני', human: true, av: 'yellow', hand: [] },
+    ...OPP_POOL.slice(0, settings.opps).map(o => ({ ...o, hand: [] })),
+  ];
+  for (let k = 0; k < HAND_SIZE; k++) for (const p of players) p.hand.push(deck.pop());
+  let first = deck.pop();
+  while (first.type !== 'num') { deck.unshift(first); first = deck.pop(); }
+
+  G = {
+    players, deck, discard: [],
+    cur: round % players.length, dir: 1, color: first.color,
+    pending: 0, taki: null, mustPlay: false,
+    phase: 'play', winner: -1,
+    log: [], bubbles: {}, hint: null, lastAt: 0,
+    round: round + 1,
+  };
+  round++;
+  place(first, -1);
+  G.lastAt = 0;
+  sortHand(players[0]);
+  const starter = G.players[G.cur];
+  say(`חילקנו ${HAND_SIZE} קלפים לכל אחד. ` + (starter.human ? 'מתחילים ממך.' : `${esc(starter.name)} ${starter.fem ? 'מתחילה' : 'מתחיל'}.`));
+  afterChange(1300);
+}
+
+function place(card, by) {
+  card.rot = Math.round(rnd(-16, 16));
+  card.dx = Math.round(rnd(-6, 6));
+  card.dy = Math.round(rnd(-5, 5));
+  card.by = by;
+  delete card.drawnAt;
+  G.discard.push(card);
+  G.lastAt = now();
+}
+
+function afterChange(delay) {
+  render();
+  scheduleAI(delay);
+}
+
+function endTurn(skip = 0) {
+  G.mustPlay = false;
+  G.cur = nextIndex(1 + skip);
+  afterChange();
+}
+
+function play(pi, card) {
+  const p = G.players[pi];
+  const i = p.hand.findIndex(c => c.id === card.id);
+  if (i < 0) return;
+  p.hand.splice(i, 1);
+  place(card, pi);
+  G.hint = null;
+  say(`${who(pi, 'שמת', 'שם', 'שמה')} ${cardName(card)}`);
+  if (p.hand.length === 1) bubble(pi, 'קלף אחרון!');
+
+  if (card.type === 'color') {
+    G.taki = null;
+    G.mustPlay = false;
+    if (!p.hand.length) return win(pi);
+    G.phase = 'color';
+    if (p.human) { render(); openPicker(); }
+    else { render(); aiTimer = setTimeout(() => pickColor(aiColor(p)), 700 * SPEED); }
+    return;
+  }
+  if (G.taki) {
+    G.taki.count++;
+    return continueTaki(pi);
+  }
+  if (card.color) G.color = card.color;
+  G.mustPlay = false;
+  if (card.type === 'taki' || card.type === 'super') {
+    G.taki = { color: G.color, count: 0 };
+    if (p.hand.length !== 1) bubble(pi, card.type === 'super' ? 'סופר תקי!' : 'תקי!');
+    return continueTaki(pi);
+  }
+  resolve(card, pi);
+}
+
+function continueTaki(pi) {
+  const p = G.players[pi];
+  if (!p.hand.some(canPlay)) return closeTaki(pi);
+  afterChange(650);
+}
+
+function closeTaki(pi) {
+  const t = G.taki;
+  if (!t) return;
+  G.taki = null;
+  const p = G.players[pi];
+  if (p.hand.length) say(who(pi, 'סגרת את התקי', 'סגר את התקי', 'סגרה את התקי'));
+  if (t.count === 0) {
+    if (!p.hand.length) return win(pi);
+    return endTurn();
+  }
+  resolve(topCard(), pi);
+}
+
+// Applies the effect of the card that ended the move
+function resolve(card, pi) {
+  const p = G.players[pi];
+  if (!p.hand.length) {
+    if (card.type === 'plus') {
+      const got = draw(pi, 1);
+      if (!got) return win(pi);
+      say(p.human ? 'אי אפשר לסיים בפלוס, אז שלפת קלף' : `${esc(p.name)} ${p.fem ? 'סיימה' : 'סיים'} בפלוס ו${p.fem ? 'שלפה' : 'שלף'} קלף`);
+      return endTurn();
+    }
+    return win(pi);
+  }
+  switch (card.type) {
+    case 'stop': {
+      const s = G.players[nextIndex(1)];
+      say(s.human ? 'התור שלך נעצר' : `${esc(s.name)} ${s.fem ? 'מפסידה' : 'מפסיד'} את התור`);
+      return endTurn(1);
+    }
+    case 'dir':
+      G.dir *= -1;
+      if (G.players.length > 2) say('כיוון המשחק התהפך');
+      return endTurn();
+    case 'plus':
+      G.mustPlay = true;
+      return afterChange(800);
+    case 'plus2':
+      G.pending += 2;
+      return endTurn();
+    default:
+      return endTurn();
+  }
+}
+
+function draw(pi, n) {
+  const p = G.players[pi];
+  let got = 0;
+  for (let k = 0; k < n; k++) {
+    if (!G.deck.length) reshuffle();
+    if (!G.deck.length) break;
+    const c = G.deck.pop();
+    if (p.human) c.drawnAt = now() + got * 90;
+    p.hand.push(c);
+    got++;
+  }
+  if (p.human) sortHand(p);
+  return got;
+}
+
+function reshuffle() {
+  if (G.discard.length < 2) return;
+  const t = G.discard.pop();
+  G.deck = shuffle(G.discard.map(c => ({ id: c.id, color: c.color, type: c.type, value: c.value })));
+  G.discard = [t];
+  say('הקופה נגמרה, ערבבנו את הערימה מחדש');
+}
+
+function drawTurn(pi) {
+  const n = G.pending || 1;
+  G.pending = 0;
+  G.mustPlay = false;
+  G.hint = null;
+  const got = draw(pi, n);
+  if (!got) say(who(pi, 'רצית לשלוף, אבל הקופה ריקה', 'רצה לשלוף, אבל הקופה ריקה', 'רצתה לשלוף, אבל הקופה ריקה'));
+  else if (got === 1) say(who(pi, 'שלפת קלף', 'שלף קלף', 'שלפה קלף'));
+  else say(who(pi, `שלפת ${got} קלפים`, `שלף ${got} קלפים`, `שלפה ${got} קלפים`));
+  endTurn();
+}
+
+function pickColor(c) {
+  if (!G || G.phase !== 'color') return;
+  const pi = G.cur;
+  G.color = c;
+  G.phase = 'play';
+  topCard().chosen = c;
+  say(who(pi, `בחרת ${HE[c]}`, `בחר ${HE[c]}`, `בחרה ${HE[c]}`));
+  $('#pick').hidden = true;
+  endTurn();
+}
+
+function win(pi) {
+  clearTimeout(aiTimer);
+  G.phase = 'over';
+  G.winner = pi;
+  G.taki = null;
+  const p = G.players[pi];
+  const key = p.human ? 'me' : p.name;
+  score[key] = (score[key] || 0) + 1;
+  store.set('taki_score', score);
+  say(p.human ? 'ירד לך הקלף האחרון' : `${esc(p.name)} ${p.fem ? 'הורידה' : 'הוריד'} את הקלף האחרון`);
+  render();
+  overTimer = setTimeout(() => { showOver(); if (p.human) confetti(); }, 950 * Math.max(SPEED, .1));
+}
+
+// ─── COMPUTER PLAYERS ───
+function scheduleAI(delay) {
+  clearTimeout(aiTimer);
+  if (!G || G.phase !== 'play' || G.players[G.cur].human) return;
+  aiTimer = setTimeout(aiStep, (delay ?? 1050) * SPEED);
+}
+
+function aiStep() {
+  if (!G || G.phase !== 'play') return;
+  const pi = G.cur;
+  if (G.players[pi].human) return;
+  const m = aiChoose(pi);
+  if (m === 'draw') drawTurn(pi);
+  else if (m === 'close') closeTaki(pi);
+  else play(pi, m);
+}
+
+function aiChoose(pi) {
+  const p = G.players[pi];
+  const ok = p.hand.filter(canPlay);
+  if (G.taki) {
+    // empty the colour, and keep the strongest action card for last
+    const rank = { plus: 0, num: 1, taki: 2, dir: 3, stop: 4, plus2: 5 };
+    const same = ok.filter(c => c.type !== 'color').sort((a, b) => rank[a.type] - rank[b.type]);
+    return same.length ? same[0] : 'close';
+  }
+  if (!ok.length) return 'draw';
+  if (G.pending) return ok[0];
+
+  const nxt = G.players[nextIndex(1)];
+  const danger = nxt.hand.length <= 2;
+  const cnt = colorCounts(p.hand);
+  let best = null, bestScore = -Infinity;
+  for (const c of ok) {
+    const others = p.hand.filter(x => x !== c);
+    let s;
+    switch (c.type) {
+      case 'num': s = 10; break;
+      case 'stop': s = danger ? 34 : 13; break;
+      case 'dir': s = danger && G.players.length > 2 ? 26 : 11; break;
+      case 'plus2': s = danger ? 36 : 15; break;
+      case 'plus': s = others.some(x => x.color === c.color || x.type === 'plus' || !x.color) ? 22 : 9; break;
+      case 'taki': { const k = others.filter(x => x.color === c.color).length; s = k >= 2 ? 28 + 3 * k : 7; break; }
+      case 'super': { const k = others.filter(x => x.color === G.color).length; s = k >= 2 ? 27 + 3 * k : 1; break; }
+      case 'color': s = others.length <= 1 ? 30 : 2; break;
+      default: s = 0;
+    }
+    if (c.color) s += cnt[c.color] * 1.5;
+    s += Math.random() * 3;
+    if (s > bestScore) { bestScore = s; best = c; }
+  }
+  return best;
+}
+
+function aiColor(p) {
+  const cnt = colorCounts(p.hand);
+  const max = Math.max(...Object.values(cnt));
+  const opts = COLORS.filter(c => cnt[c] === max);
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
+// ─── YOUR MOVES ───
+function myTurn() {
+  return G && G.phase === 'play' && G.players[G.cur].human;
+}
+
+function hint(html) {
+  G.hint = { text: html, at: now() };
+  render();
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => G && render(), 2600);
+}
+
+function whyNot() {
+  if (G.pending) return `אפשר לשים רק ${PLUS2}, או לשלוף ${G.pending} קלפים`;
+  if (G.taki) return `בתקי פתוח שמים רק קלפים בצבע ${HE[G.taki.color]}`;
+  const t = topCard();
+  let need = `צריך קלף ${HE[G.color]}`;
+  if (t.type === 'num') need += ` או ${t.value}`;
+  else if (t.color) need += ` או ${symName(t)}`;
+  return `הקלף לא מתאים. ${need}`;
+}
+
+function nudge(el) {
+  if (!el) return;
+  el.classList.remove('nudge');
+  void el.offsetWidth;
+  el.classList.add('nudge');
+}
+
+function onCard(id, el) {
+  if (!G || G.phase === 'over') return;
+  if (!myTurn()) { nudge(el); hint(G.phase === 'color' ? 'קודם בוחרים צבע' : 'התור עוד לא שלך'); return; }
+  const card = G.players[G.cur].hand.find(c => c.id === id);
+  if (!canPlay(card)) { nudge(el); hint(whyNot()); return; }
+  play(G.cur, card);
+}
+
+function onAct() {
+  if (!myTurn()) return;
+  if (G.taki) closeTaki(G.cur);
+  else drawTurn(G.cur);
+}
+
+function onDeck() {
+  if (!G || G.phase === 'over') return;
+  if (!myTurn()) { hint('התור עוד לא שלך'); return; }
+  if (G.taki) { hint('בתקי פתוח לא שולפים. אפשר לסגור את התקי'); return; }
+  drawTurn(G.cur);
+}
+
+// ─── RENDER ───
+const DIR_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3v4.5h-4.5"/></svg>';
+
+function bubbleHTML(pi) {
+  const b = G.bubbles[pi];
+  if (!b) return '';
+  const e = now() - b.at;
+  if (e > 2400) return '';
+  return `<div class="bubble" style="animation-delay:-${e}ms">${b.text}</div>`;
+}
+
+function render() {
+  if (!G) return;
+  const t = now();
+  const n = G.players.length;
+  const live = G.phase !== 'over';
+  $('#round').textContent = `סיבוב ${G.round}`;
+
+  // opponents
+  const opps = $('#opps');
+  opps.style.setProperty('--n', n - 1);
+  opps.innerHTML = G.players.slice(1).map((p, k) => {
+    const i = k + 1;
+    const on = live && G.cur === i;
+    const shown = Math.min(p.hand.length, 10);
+    const thinking = on ? ` · <span class="dots">${p.fem ? 'חושבת' : 'חושב'}<i>.</i><i>.</i><i>.</i></span>` : '';
+    return `<div class="seat${on ? ' on' : ''}${G.winner === i ? ' won' : ''}">
+      <div class="seat-top">
+        <span class="avatar" style="${avStyle(p)}">${esc(firstChar(p.name))}</span>
+        <div class="seat-id"><div class="seat-name">${esc(p.name)}</div><div class="seat-count">${countText(p.hand.length)}${thinking}</div></div>
+      </div>
+      <div class="mini-fan" aria-hidden="true">${'<span class="mini"></span>'.repeat(shown)}${p.hand.length > 10 ? `<span class="more">+${p.hand.length - 10}</span>` : ''}</div>
+      ${bubbleHTML(i)}
+    </div>`;
+  }).join('');
+
+  // draw pile
+  const canDraw = myTurn() && !G.taki;
+  const deck = $('#deck');
+  const layers = Math.min(3, Math.max(1, Math.ceil(G.deck.length / 20)));
+  deck.innerHTML = G.deck.length ? Array.from({ length: layers }, () => `<div class="stk">${BACK_SVG}</div>`).join('') : '';
+  deck.setAttribute('aria-disabled', canDraw ? 'false' : 'true');
+  deck.setAttribute('aria-label', `קופה, ${G.deck.length} קלפים`);
+  $('#deck-label').textContent = `קופה · ${G.deck.length}`;
+
+  // discard pile
+  const disc = $('#discard');
+  disc.style.setProperty('--cur', `var(--c-${G.color})`);
+  const shown = G.discard.slice(-4);
+  disc.innerHTML = shown.map((c, k) => {
+    const isTop = k === shown.length - 1;
+    const e = t - G.lastAt;
+    let anim = '';
+    if (isTop && e < 380) {
+      const opp = n - 1;
+      const fx = c.by <= 0 ? 0 : ((opp + 1) / 2 - c.by) * 90;
+      const fy = c.by === 0 ? 170 : c.by < 0 ? 0 : -150;
+      anim = ` land" style="--fx:${fx}px;--fy:${fy}px;animation-delay:-${e}ms;`;
+    } else anim = '" style="';
+    return `<div class="pcard${anim}--rot:${c.rot}deg;--dx:${c.dx}px;--dy:${c.dy}px">${cardSVG(c)}</div>`;
+  }).join('');
+  disc.setAttribute('aria-label', `קלף עליון: ${plain(cardName(topCard()))}`);
+
+  // middle info
+  const nx = G.players[nextIndex(1)];
+  $('#mid').innerHTML =
+    `<div class="cur-color"><span class="dot" style="--cur:var(--c-${G.color})"></span><span>צבע: ${HE[G.color]}</span></div>` +
+    (G.taki ? `<span class="flag">תקי פתוח</span>` : '') +
+    (G.pending ? `<span class="pend" dir="ltr" title="קלפים לשליפה">+${G.pending}</span>` : '') +
+    (live && n > 2 ? `<div class="next">${DIR_ICON.replace('<svg', `<svg class="${G.dir === 1 ? '' : 'flip'}"`)}<span>הבא:</span><b>${esc(nx.name)}</b></div>` : '');
+
+  // status
+  let turn;
+  const cp = G.players[G.cur];
+  if (!live) {
+    const w = G.players[G.winner];
+    turn = w.human ? 'ניצחת!' : `${esc(w.name)} ${w.fem ? 'ניצחה' : 'ניצח'}`;
+  } else if (G.hint && t - G.hint.at < 2500) {
+    turn = `<span class="warn">${G.hint.text}</span>`;
+  } else if (cp.human) {
+    turn = myPrompt();
+  } else {
+    turn = G.phase === 'color' ? `${esc(cp.name)} ${cp.fem ? 'בוחרת' : 'בוחר'} צבע…` : `התור של ${esc(cp.name)}`;
+  }
+  $('#status').innerHTML = `<div class="ev">${G.log[G.log.length - 1] || ''}</div><div class="turn">${turn}</div>`;
+
+  // me
+  const me = G.players[0];
+  const mine = myTurn();
+  $('#me').classList.toggle('on', mine || (G.phase === 'color' && G.cur === 0));
+  const av = $('#me-av');
+  av.setAttribute('style', avStyle(me));
+  av.textContent = firstChar(me.name);
+  $('#me-name').textContent = me.name;
+  $('#me-count').textContent = countText(me.hand.length);
+  const act = $('#btn-act');
+  act.textContent = G.taki ? 'לסגור את התקי' : G.pending ? `לשלוף ${G.pending} קלפים` : 'לשלוף קלף';
+  act.disabled = !mine;
+
+  const hand = $('#hand');
+  hand.classList.toggle('mine', mine);
+  hand.innerHTML = me.hand.map(c => {
+    const ok = mine && canPlay(c);
+    const e = c.drawnAt ? t - c.drawnAt : Infinity;
+    const fresh = e < 420;
+    return `<button type="button" class="card ${ok ? 'ok' : 'no'}${fresh ? ' deal' : ''}" data-id="${c.id}"` +
+      (fresh ? ` style="animation-delay:${-e}ms"` : '') +
+      ` aria-label="${plain(cardName(c))}${mine && !ok ? ' (לא מתאים)' : ''}">${cardSVG(c)}</button>`;
+  }).join('');
+  $('#me-bubble').innerHTML = bubbleHTML(0);
+  layoutHand();
+}
+
+function myPrompt() {
+  const me = G.players[0];
+  if (G.phase === 'color') return 'לבחור צבע';
+  if (G.pending) return `התור שלך: לשים ${PLUS2} או לשלוף ${G.pending}`;
+  if (G.taki) return `תקי פתוח: עוד קלפים בצבע ${HE[G.taki.color]}, או לסגור`;
+  const any = me.hand.some(canPlay);
+  if (G.mustPlay) return any ? 'אחרי פלוס צריך לשים עוד קלף' : 'אחרי פלוס, ואין קלף מתאים: לשלוף';
+  return any ? 'התור שלך' : 'התור שלך: אין קלף מתאים, לשלוף מהקופה';
+}
+
+// overlap the hand so it always fits in one row
+function layoutHand() {
+  const hand = $('#hand');
+  const cards = hand.children;
+  const n = cards.length;
+  if (!n) return;
+  const W = hand.clientWidth;
+  const cw = cards[0].offsetWidth;
+  let step = cw + 6;
+  if (n > 1 && step * (n - 1) + cw > W) step = (W - cw) / (n - 1);
+  hand.style.setProperty('--ov', `${step - cw}px`);
+}
+
+// ─── OVERLAYS ───
+function boardHTML() {
+  return G.players.map((p, i) => {
+    const key = p.human ? 'me' : p.name;
+    return `<li class="${G.winner === i ? 'w' : ''}"><span class="avatar sm" style="${avStyle(p)}">${esc(firstChar(p.name))}</span>` +
+      `<span class="b-name">${esc(p.name)}</span><span class="b-wins">${score[key] || 0}</span></li>`;
+  }).join('');
+}
+
+function openPicker() {
+  $('#pick').hidden = false;
+  $('#pick .swatch').focus();
+}
+
+function showOver() {
+  if (!G || G.phase !== 'over') return;
+  const w = G.players[G.winner];
+  const me = G.players[0];
+  $('#over-t').textContent = w.human ? 'ניצחת!' : `${w.name} ${w.fem ? 'ניצחה' : 'ניצח'}`;
+  $('#over-sub').textContent = w.human
+    ? `נפטרת מכל הקלפים בסיבוב ${G.round}.`
+    : me.hand.length === 1 ? 'נשאר לך קלף אחד ביד.' : `נשארו לך ${me.hand.length} קלפים ביד.`;
+  $('#over-board').innerHTML = boardHTML();
+  $('#over').hidden = false;
+  $('#btn-again').focus();
+}
+
+function openSettings() {
+  $('#opt-name').value = settings.name;
+  const r = document.getElementById('opt-o' + settings.opps);
+  if (r) r.checked = true;
+  $('#settings-board').innerHTML = boardHTML();
+  $('#over').hidden = true;
+  $('#settings').hidden = false;
+}
+
+function closeAll() {
+  for (const id of ['pick', 'over', 'settings', 'rules']) $('#' + id).hidden = true;
+}
+
+// ─── CONFETTI ───
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = $('#fx');
+  cv.hidden = false;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.width = innerWidth * dpr;
+  const H = cv.height = innerHeight * dpr;
+  const ctx = cv.getContext('2d');
+  const css = getComputedStyle(document.documentElement);
+  const cols = COLORS.map(c => css.getPropertyValue('--c-' + c).trim());
+  const parts = Array.from({ length: 150 }, () => ({
+    x: Math.random() * W, y: -Math.random() * H * .6,
+    vx: rnd(-1.5, 1.5) * dpr, vy: rnd(2, 5) * dpr,
+    w: rnd(6, 11) * dpr, h: rnd(9, 15) * dpr,
+    a: Math.random() * 6.28, va: rnd(-.15, .15),
+    col: cols[Math.floor(Math.random() * 4)],
+  }));
+  const t0 = performance.now();
+  (function frame(ts) {
+    const e = ts - t0;
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalAlpha = e > 2600 ? Math.max(0, 1 - (e - 2600) / 600) : 1;
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.a);
+      ctx.fillStyle = p.col;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.a * 1.7)));
+      ctx.restore();
+    }
+    if (e < 3200) requestAnimationFrame(frame);
+    else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+  })(t0);
+}
+
+// ─── EVENTS ───
+$('#hand').addEventListener('click', e => {
+  const el = e.target.closest('.card');
+  if (el) onCard(+el.dataset.id, el);
+});
+$('#deck').addEventListener('click', onDeck);
+$('#btn-act').addEventListener('click', onAct);
+$('#btn-rules').addEventListener('click', () => { $('#rules').hidden = false; $('#rules .x').focus(); });
+$('#btn-new').addEventListener('click', openSettings);
+$('#btn-again').addEventListener('click', newGame);
+$('#btn-over-settings').addEventListener('click', openSettings);
+document.querySelectorAll('.swatch').forEach(b => b.addEventListener('click', () => pickColor(b.dataset.c)));
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => { $('#' + b.dataset.close).hidden = true; }));
+for (const id of ['rules', 'settings']) {
+  $('#' + id).addEventListener('click', e => { if (e.target.id === id) $('#' + id).hidden = true; });
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { $('#rules').hidden = true; $('#settings').hidden = true; }
+});
+$('#settings-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#opt-name').value.trim();
+  const picked = document.querySelector('input[name="opps"]:checked');
+  settings = { name: name || 'אני', opps: picked ? +picked.value : 2 };
+  store.set('taki_settings', settings);
+  round = 0;
+  newGame();
+});
+$('#btn-reset').addEventListener('click', () => {
+  score = {};
+  store.set('taki_score', score);
+  $('#settings-board').innerHTML = boardHTML();
+});
+window.addEventListener('resize', layoutHand);
+
+document.querySelectorAll('[data-mini]').forEach(el => {
+  const [type, color] = el.dataset.mini.split(':');
+  el.innerHTML = cardSVG({ type, color: color || null, value: 0 });
+});
+
+// ─── BOOT ───
+// Keeps the round going when the page is updated while open
+const hot = window.claude && window.claude.hot;
+if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ G, round }));
+
+function resume() {
+  render();
+  if (G.phase === 'over') showOver();
+  else if (G.phase === 'color') {
+    if (G.players[G.cur].human) openPicker();
+    else aiTimer = setTimeout(() => pickColor(aiColor(G.players[G.cur])), 700 * SPEED);
+  } else scheduleAI();
+}
+
+function boot(data) {
+  if (data && data.G && data.G.players) {
+    G = data.G;
+    round = data.round || G.round;
+    resume();
+  } else newGame();
+}
+
+if (hot && typeof hot.ready === 'function') hot.ready(boot);
+else boot((hot && hot.data) || {});
+</script>
+</body>
+</html>
